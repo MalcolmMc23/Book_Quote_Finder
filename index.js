@@ -6,24 +6,37 @@ import { config } from 'dotenv'
 config()
 const openai = new OpenAI({ apiKey: process.env.API_KEY });
 
-const defaultPrompt = `please find quotes from the following text thet help prove the theme`
-const userInput = "education of women"
+
+//************************************************************************************************
+// instructions for the assistant
+const instructions = "you are a ai that finds quotes of provided theme from a provided text. you will only responds with a list of quotes from the text provided. If you can not find quotes please respond with an empty string"
+
+// the prompt given + the user input -> each chunk will be added to the end of the prompt when needed.
+const defaultPrompt = `please find quotes from the following text thet help prove the theme of `
+const userInput = "racism"
 const messageContent = `${defaultPrompt} '${userInput}':`
 
+//the name of the book pdf to find quotes for
+//make sure to put pdf at the end
+const bookName = "undergroundRailroad"
+const bookFileName = `${bookName}/Underground Railroad Colson Whitehead.pdf`
+//************************************************************************************************
+
+
 // Read your PDF file
-const pdfFile = fs.readFileSync('./Underground Railroad Colson Whitehead.pdf');
+const pdfFile = fs.readFileSync(`./books/${bookFileName}`);
 
 pdfParse(pdfFile).then(function (data) {
     // data.text contains the extracted text
     // Save the extracted text into a .txt file
-    fs.writeFileSync('output.txt', data.text);
-    console.log("txt file with the book was created!");
+    fs.writeFileSync(`./books/${bookName}/output.txt`, data.text);
+    console.log(`txt file with the book was created! in ./books/${bookName}/output.txt`);
 }).catch(error => {
     console.error("Failed to parse PDF:", error);
 });
 
 // Path to the input text file
-const inputFilePath = './output.txt';
+const inputFilePath = `./books/${bookName}/output.txt`;
 
 // Read the content of the input text file
 const text = fs.readFileSync(inputFilePath, 'utf8');
@@ -44,7 +57,7 @@ function splitTextIntoChunks(text, maxWordsPerChunk) {
 
 
 // Base directory where files will be created
-const outputDirectory = './chunks';
+const outputDirectory = `./books/${bookName}/chunks`;
 // Ensure the output directory exists
 fs.mkdirSync(outputDirectory, { recursive: true });
 // Function to create files from array elements
@@ -80,7 +93,9 @@ let responces = []
 
 async function processChunksSequentially(paths) {
     let index = 0
-    const responsceFolder = "./responces"
+    // const responsceFolder = "./responces"
+    const responsceFolder = `./books/${bookName}/quotes`
+
 
     for (const quotePath of paths) {
         let quotes = await extractQuotes(quotePath);
@@ -96,10 +111,6 @@ async function processChunksSequentially(paths) {
     let fileContent = JSON.stringify(responces)
     fs.writeFileSync(filePath, fileContent, 'utf8');
     console.log(`Created file: ${filePath}`);
-
-
-
-    // sortResponces()
 }
 
 console.log(chunkPaths)
@@ -111,7 +122,7 @@ async function extractQuotes(path) {
 
     const assistant = await openai.beta.assistants.create({
         name: "quote finder",
-        instructions: "you are a ai that finds quotes of provided theme from a provided text. you will only responds with a list of quotes from the text provided.",
+        instructions: instructions,
         model: "gpt-4-0125-preview",
     })
 
@@ -151,6 +162,8 @@ async function extractQuotes(path) {
                 }
                 else {
                     console.log(`run is not compleated yet + ${runStatus.status}`)
+                    resolve(null);
+
                     // console.log(runStatus)
                 }
             } catch (error) {
@@ -165,19 +178,3 @@ async function extractQuotes(path) {
     }
     )
 }
-
-
-function sortResponces() {
-    console.log("here")
-    const responsceFolder = "./responces"
-    //checks if folder exists
-    fs.mkdirSync(responsceFolder, { recursive: true });
-
-    responces.forEach((quoteArray, index) => { // Assuming 'quoteArray' holds your array of quotes
-        const filePath = path.join(responsceFolder, `File_${index + 1}.txt`);
-        const fileContent = JSON.stringify(quoteArray);
-        fs.writeFileSync(filePath, fileContent, 'utf8');
-        console.log(`Created file: ${filePath}`);
-    })
-}
-
