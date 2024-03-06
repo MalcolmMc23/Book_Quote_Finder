@@ -9,17 +9,20 @@ const openai = new OpenAI({ apiKey: process.env.API_KEY });
 
 //************************************************************************************************
 // instructions for the assistant
-const instructions = "you are a ai that finds quotes of provided theme from a provided text. you will only responds with a list of quotes from the text provided. If you can not find quotes please respond with an empty string"
+const instructions = "you are a ai that finds quotes of provided theme from a provided text. you will only responds with a list of quotes from the text provided. If you can not find quotes please respond with an empty string. please put your response in an array."
 
 // the prompt given + the user input -> each chunk will be added to the end of the prompt when needed.
-const defaultPrompt = `please find quotes from the following text thet help prove the theme of `
+const defaultPrompt = `please find 0 to 5 of the best quotes from the following text thet help prove the motif of`
+
 const userInput = "racism"
 const messageContent = `${defaultPrompt} '${userInput}':`
 
 //the name of the book pdf to find quotes for
 //make sure to put pdf at the end
-const bookName = "undergroundRailroad"
-const bookFileName = `${bookName}/Underground Railroad Colson Whitehead.pdf`
+const bookName = "TheNickelBoys"
+const bookFileName = `${bookName}/The Nickel Boys.pdf`
+const responsceFolder = `./books/${bookName}/quotes`
+
 //************************************************************************************************
 
 
@@ -62,6 +65,10 @@ const outputDirectory = `./books/${bookName}/chunks`;
 fs.mkdirSync(outputDirectory, { recursive: true });
 // Function to create files from array elements
 let chunkPaths = []
+fs.writeFile(outputDirectory, '', function (err) {
+    if (err) throw err;
+    console.log('File content deleted');
+});
 chunks.forEach((str, index) => {
     // Construct file name with incrementing number
     const fileName = `File_${index + 1}.txt`;
@@ -74,29 +81,10 @@ chunks.forEach((str, index) => {
 });
 console.log('All files have been successfully created.');
 
-
-// async function main() {
-//     let chunk1 = fs.readFileSync("/Users/malcolm/Documents/MyProjects/bookQuoteFinder/chunks/File_2.txt", 'utf8');
-//     console.log(chunk1);
-//     const completion = await openai.chat.completions.create({
-//         messages: [{ role: "system", content: `please give me quotes from the previded text that is NOT COPYRIGHT and give me quotes about how harry doesnt lke his family from the following text: ${chunk1}` }],
-//         model: "gpt-4-turbo-preview",
-//     });
-
-//     console.log(completion.choices[0]);
-// }
-
-// main();
-
-
 let responces = []
 
 async function processChunksSequentially(paths) {
     let index = 0
-    // const responsceFolder = "./responces"
-    const responsceFolder = `./books/${bookName}/quotes`
-
-
     for (const quotePath of paths) {
         let quotes = await extractQuotes(quotePath);
         responces.push(quotes)
@@ -111,6 +99,8 @@ async function processChunksSequentially(paths) {
     let fileContent = JSON.stringify(responces)
     fs.writeFileSync(filePath, fileContent, 'utf8');
     console.log(`Created file: ${filePath}`);
+    console.log("All the quotes have been put into one file ^")
+    main()
 }
 
 console.log(chunkPaths)
@@ -178,3 +168,22 @@ async function extractQuotes(path) {
     }
     )
 }
+
+
+async function main() {
+
+    const completion = await openai.chat.completions.create({
+        messages: [{ role: "system", content: `please pick out the best quotes for the follow prompt: "${messageContent}" here are the quotes to choose from: ${responces.join()}` }],
+        model: "gpt-4-turbo-preview",
+    });
+
+    console.log(completion.choices[0]);
+    let filePath = path.join(responsceFolder, `bestQuotes.txt`)
+    // let fileContent = JSON.stringify(responces)
+    let fileContent = responces.join()
+
+    fs.writeFileSync(filePath, fileContent, 'utf8');
+    console.log(`Created file: ${filePath}`);
+    console.log("All the BEST quotes have been put into one file ^")
+}
+
