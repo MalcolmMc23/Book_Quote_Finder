@@ -65,10 +65,7 @@ const outputDirectory = `./books/${bookName}/chunks`;
 fs.mkdirSync(outputDirectory, { recursive: true });
 // Function to create files from array elements
 let chunkPaths = []
-fs.writeFile(outputDirectory, '', function (err) {
-    if (err) throw err;
-    console.log('File content deleted');
-});
+
 chunks.forEach((str, index) => {
     // Construct file name with incrementing number
     const fileName = `File_${index + 1}.txt`;
@@ -85,6 +82,10 @@ let responces = []
 
 async function processChunksSequentially(paths) {
     let index = 0
+    // const responsceFolder = "./responces"
+    // const responsceFolder = `./books/${bookName}/quotes`
+
+
     for (const quotePath of paths) {
         let quotes = await extractQuotes(quotePath);
         responces.push(quotes)
