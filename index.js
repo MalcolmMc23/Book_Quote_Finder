@@ -43,7 +43,7 @@ const inputFilePath = `./books/${bookName}/output.txt`;
 
 // Read the content of the input text file
 const text = fs.readFileSync(inputFilePath, 'utf8');
-
+deleteFolderContents(responsceFolder).then(() => console.log('Folder contents deleted successfully.'));
 let chunks = splitTextIntoChunks(text, 4000);
 function splitTextIntoChunks(text, maxWordsPerChunk) {
     const words = text.split(/\s+/); // Split text into words
@@ -82,9 +82,6 @@ let responces = []
 
 async function processChunksSequentially(paths) {
     let index = 0
-    // const responsceFolder = "./responces"
-    // const responsceFolder = `./books/${bookName}/quotes`
-
 
     for (const quotePath of paths) {
         let quotes = await extractQuotes(quotePath);
@@ -188,3 +185,22 @@ async function main() {
     console.log("All the BEST quotes have been put into one file ^")
 }
 
+
+
+
+async function deleteFolderContents(folderPath) {
+    try {
+        const files = await fs.readdir(folderPath, { withFileTypes: true });
+        for (const file of files) {
+            const fullPath = path.join(folderPath, file.name);
+            if (file.isDirectory()) {
+                await deleteFolderContents(fullPath);
+                await fs.rmdir(fullPath);
+            } else {
+                await fs.unlink(fullPath);
+            }
+        }
+    } catch (error) {
+        console.error('Error deleting folder contents:', error);
+    }
+}
