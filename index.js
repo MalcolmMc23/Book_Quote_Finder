@@ -12,9 +12,9 @@ const openai = new OpenAI({ apiKey: process.env.API_KEY });
 const instructions = "you are a ai that finds quotes of provided theme from a provided text. you will only responds with a list of quotes from the text provided. If you can not find quotes please respond with an empty string. please put your response in an array."
 
 // the prompt given + the user input -> each chunk will be added to the end of the prompt when needed.
-const defaultPrompt = `please find 0 to 5 of the best quotes from the following text thet help prove the motif of`
+const defaultPrompt = `please find 0 to 5 of the best quotes from the following text thet help Characterization`
 
-const userInput = "racism"
+const userInput = "Elwood"
 const messageContent = `${defaultPrompt} '${userInput}':`
 
 //the name of the book pdf to find quotes for
